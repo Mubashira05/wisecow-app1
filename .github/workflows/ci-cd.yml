@@ -14,8 +14,8 @@ jobs:
 
       - name: Ensure server.key exists
         run: |
-          mkdir -p /home/ec2-user/wisecow-app1
-          echo "" > /home/ec2-user/wisecow-app1/server.key
+          mkdir -p $HOME/wisecow-app1
+          echo "" > $HOME/wisecow-app1/server.key
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -32,7 +32,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: your-docker-image-mu:latest
+          tags: your-docker-image-name:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -45,4 +45,3 @@ jobs:
         run: |
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
-
