@@ -1,18 +1,21 @@
-# Base image
-FROM node:14
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
-# Create application directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY package.json ./
-RUN npm install
-
-# Copy the rest of the application code
+# Copy the current directory contents into the container at /app
 COPY . .
 
-# Expose port (assuming the app runs on 3000)
-EXPOSE 3000
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Start the application
-CMD ["npm", "start"]
+# Expose port for TLS (443)
+EXPOSE 443
+
+# Copy your SSL certificates (update paths as necessary)
+COPY certs/server.crt /etc/ssl/certs/
+COPY certs/server.key /etc/ssl/private/
+
+# Run the application using Gunicorn to handle TLS
+CMD ["gunicorn", "--certfile=/etc/ssl/certs/server.crt", "--keyfile=/etc/ssl/private/server.key", "-b", "0.0.0.0:443", "app:app"]
