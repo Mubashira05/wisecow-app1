@@ -13,10 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose port for TLS (443)
 EXPOSE 443
 
-# Example: Adjust paths as necessary
-COPY path/to/your/certs/server.crt /etc/ssl/certs/
-COPY /home/ec2-user/wisecow-app1/server.key /etc/ssl/private/
+# Copy SSL certificates (ensure they exist in the `certs` directory in your project)
+COPY certs/server.crt /etc/ssl/certs/
+COPY certs/server.key /etc/ssl/private/
 
-
-# Run the application using Gunicorn to handle TLS
-CMD ["gunicorn", "--certfile=/etc/ssl/certs/server.crt", "--keyfile=/etc/ssl/private/server.key", "-b", "0.0.0.0:443", "app:app"]
+# Run the application (assuming you have a script named `app.py`)
+CMD ["python", "app.py"]
