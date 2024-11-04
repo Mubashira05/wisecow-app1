@@ -15,7 +15,7 @@ EXPOSE 443
 
 # Example: Adjust paths as necessary
 COPY path/to/your/certs/server.crt /etc/ssl/certs/
-COPY path/to/your/certs/server.key /etc/ssl/private/
+COPY /home/ec2-user/wisecow-app1/server.key /etc/ssl/private/
 
 
 # Run the application using Gunicorn to handle TLS
