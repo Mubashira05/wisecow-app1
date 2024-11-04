@@ -13,9 +13,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose port for TLS (443)
 EXPOSE 443
 
-# Copy your SSL certificates (update paths as necessary)
-COPY certs/server.crt /etc/ssl/certs/
-COPY certs/server.key /etc/ssl/private/
+# Example: Adjust paths as necessary
+COPY path/to/your/certs/server.crt /etc/ssl/certs/
+COPY path/to/your/certs/server.key /etc/ssl/private/
+
 
 # Run the application using Gunicorn to handle TLS
 CMD ["gunicorn", "--certfile=/etc/ssl/certs/server.crt", "--keyfile=/etc/ssl/private/server.key", "-b", "0.0.0.0:443", "app:app"]
