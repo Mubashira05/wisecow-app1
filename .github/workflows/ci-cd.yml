@@ -1,10 +1,9 @@
-
 name: CI/CD Pipeline for Wisecow App
 
 on:
   push:
     branches:
-      - main  # Trigger on push to main branch
+      - main  # Trigger on push to the main branch
 
 jobs:
   build-and-push:
@@ -24,34 +23,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
+      - name: Log in to AWS ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+
       - name: Build Docker image
         run: |
-          docker build -t <your-container-registry>/wisecow:${{ github.sha }} .
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/wisecow:${{ github.sha }} .
 
-      
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/wisecow:${{ github.sha }}
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v3- name: Log in to Amazon ECR
-  uses: aws-actions/amazon-ecr-login@v1
-  with:
-    region: us-west-2  # Update with your region
-
-- name: Build Docker image
-  run: |
-    docker build -t your-ecr-repository-name/wisecow:${{ github.sha }} .
-
-- name: Push Docker image to ECR
-  run: |
-    docker push your-ecr-repository-name/wisecow:${{ github.sha }}
-
+        uses: azure/setup-kubectl@v3
         with:
           kubeconfig: ${{ secrets.KUBECONFIG }}
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/wisecow-app wisecow-app=<your-container-registry>/wisecow:${{ github.sha }}
+          kubectl set image deployment/wisecow-app wisecow-app=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/wisecow:${{ github.sha }}
           kubectl rollout status deployment/wisecow-app
