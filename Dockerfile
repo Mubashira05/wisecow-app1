@@ -14,8 +14,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 443
 
 # Copy SSL certificates (ensure they exist in the `certs` directory in your project)
-COPY certs/server.crt /etc/ssl/certs/
-COPY certs/server.key /etc/ssl/private/
+COPY server.crt /etc/ssl/certs/
+COPY server.key /etc/ssl/private/
 
-# Run the application (assuming you have a script named `app.py`)
-CMD ["python", "app.py"]
+
+# Run the application using Gunicorn to handle TLS
+# Here, `app:app` assumes that `app.py` contains a Flask app named `app`
+CMD ["gunicorn", "--certfile=/etc/ssl/certs/server.crt", "--keyfile=/etc/ssl/private/server.key", "-b", "0.0.0.0:443", "app:app"]
