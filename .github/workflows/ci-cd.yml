@@ -1,53 +1,27 @@
-name: CI/CD Pipeline for Wisecow App
+name: Build and Push Docker Image to AWS ECR
 
 on:
   push:
     branches:
-      - main  # Trigger on push to the main branch
+      - main
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Log in to AWS ECR
+      - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ secrets.AWS_REGION }}
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/wisecow:${{ github.sha }} .
+          docker build -t 084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }} .
 
-      - name: Push Docker image to ECR
+      - name: Push Docker image to Amazon ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/wisecow:${{ github.sha }}
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl set image deployment/wisecow-app wisecow-app=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/wisecow:${{ github.sha }}
-          kubectl rollout status deployment/wisecow-app
+          docker push 084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }}
