@@ -18,6 +18,5 @@ COPY server.crt /etc/ssl/certs/
 COPY server.key /etc/ssl/private/
 
 
-# Run the application using Gunicorn to handle TLS
-# Here, `app:app` assumes that `app.py` contains a Flask app named `app`
-CMD ["gunicorn", "--certfile=/etc/ssl/certs/server.crt", "--keyfile=/etc/ssl/private/server.key", "-b", "0.0.0.0:443", "app:app"]
+# Run the application (assuming you have a script named app.py)
+CMD ["python", "app.py"]
