@@ -1,58 +1,28 @@
-name: CI/CD Pipeline for Wisecow App
-
-on:
-  push:
-    branches:
-      - main  # Trigger on push to the main branch
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3  # Updated to v3
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v3  # Updated to v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-build-
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        env:
-          AWS_REGION: eu-north-1  # Correct region set as an environment variable
-
-      - name: Build Docker image
-        run: |
-          docker build -t 084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }} .
-
-      - name: Push Docker image to Amazon ECR
-        run: |
-          docker push 084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }}
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1  # Change to your AWS region
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set up kubectl
-        uses: aws-actions/eks-kubeconfig-action@v1
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3  # Updated to v3
         with:
-          cluster-name: your-eks-cluster-name  # Replace with your EKS cluster name
-
-      - name: Deploy to Kubernetes (EKS)
-        run: |
-          kubectl set image deployment/wisecow-app wisecow-app=084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }}
-          kubectl rollout status deployment/wisecow-app
+          context: .
+          push: true
+          tags: your-docker-username/your-repository:latest
