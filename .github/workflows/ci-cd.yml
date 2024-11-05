@@ -1,24 +1,32 @@
-name: Build and Push Docker Image to AWS ECR
+name: CI/CD Pipeline for Wisecow App
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger on push to main branch
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+      - name: Cache Docker layers
+        uses: actions/cache@v2
         with:
-          region: eu-north-1
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: eu-north-1  # Change this to your AWS region
 
       - name: Build Docker image
         run: |
@@ -27,3 +35,24 @@ jobs:
       - name: Push Docker image to Amazon ECR
         run: |
           docker push 084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1  # Change to your region
+
+      - name: Set up kubectl
+        uses: aws-actions/eks-kubeconfig-action@v1
+        with:
+          cluster-name: your-eks-cluster-name  # Replace with your EKS cluster name
+
+      - name: Deploy to Kubernetes (EKS)
+        run: |
+          kubectl set image deployment/wisecow-app wisecow-app=084375568856.dkr.ecr.eu-north-1.amazonaws.com/wisecow:${{ github.sha }}
+          kubectl rollout status deployment/wisecow-app
